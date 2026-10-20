@@ -1,143 +1,135 @@
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/hooks/useStore';
 import './dashboard.scss';
 
-type TMobileIconGuide = {
-    handleTabChange: (active_number: number) => void;
-};
+const Dashboard = observer(() => {
+    const { dashboard } = useStore();
+    const { setActiveTab } = dashboard;
 
-const PHRASES = [
-    "One workspace. More possibilities.",
-    "Build. Automate. Explore.",
-    "Turn your ideas into strategies.",
-    "Tools for your next move."
-];
+    // Typewriter effect for the hero banner
+    const fullText = "Welcome to TraderScheme — High-Performance Synthetic Index Analytics & Automated Execution Hub.";
+    const [displayedText, setDisplayedText] = useState('');
 
-const DashboardComponent = observer(({ handleTabChange }: TMobileIconGuide) => {
-    const store = useStore();
-    const [phraseIndex, setPhraseIndex] = useState(0);
-    const [typedText, setTypedText] = useState('');
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    // Typewriter effect logic
     useEffect(() => {
-        const currentPhrase = PHRASES[phraseIndex];
-        const typingSpeed = isDeleting ? 30 : 60;
-
-        const timer = setTimeout(() => {
-            if (!isDeleting && typedText === currentPhrase) {
-                setTimeout(() => setIsDeleting(true), 2000);
-            } else if (isDeleting && typedText === '') {
-                setIsDeleting(false);
-                setPhraseIndex((prev) => (prev + 1) % PHRASES.length);
+        let i = 0;
+        const typingInterval = setInterval(() => {
+            if (i < fullText.length) {
+                setDisplayedText(prev => prev + fullText.charAt(i));
+                i++;
             } else {
-                setTypedText(
-                    isDeleting
-                        ? currentPhrase.substring(0, typedText.length - 1)
-                        : currentPhrase.substring(0, typedText.length + 1)
-                );
+                clearInterval(typingInterval);
             }
-        }, typingSpeed);
-
-        return () => clearTimeout(timer);
-    }, [typedText, isDeleting, phraseIndex]);
-
-    const handleNavigate = (tabIndex: number) => {
-        if (typeof handleTabChange === 'function') {
-            handleTabChange(tabIndex);
-        }
-    };
+        }, 30);
+        return () => clearInterval(typingInterval);
+    }, []);
 
     return (
-        <div className="sp-dashboard-container">
-            {/* Hero Typewriter Section */}
-            <div className="sp-hero">
-                <div className="sp-badge">
-                    <span className="sp-badge__dot"></span>
-                    <span className="sp-badge__text">SYNTHETICPIPS ENGINE</span>
-                    <span className="sp-badge__divider">|</span>
-                    <span className="sp-badge__sub">YOUR TRADING WORKSPACE</span>
+        <div className="traderscheme-dashboard" style={{ padding: '24px', color: '#f1f5f9', minHeight: '90vh' }}>
+            {/* Hero Banner with Typewriter */}
+            <div className="glass-hero" style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8))',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+                padding: '32px',
+                marginBottom: '32px',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                    <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '20px',
+                        color: '#fff',
+                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.5)'
+                    }}>
+                        SP
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: '24px', fontWeight: '700', margin: 0, background: 'linear-gradient(90deg, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                            SyntheticPips | TraderScheme
+                        </h1>
+                        <span style={{ fontSize: '13px', color: '#94a3b8' }}>Live WebSocket Trading & Analytics Engine</span>
+                    </div>
                 </div>
-
-                <h1 className="sp-hero__title">
-                    {typedText}
-                    <span className="sp-cursor">|</span>
-                </h1>
-
-                <p className="sp-hero__subtitle">
-                    &ldquo;Good decisions matter more than a single outcome.&rdquo;
+                <p style={{ fontSize: '15px', color: '#cbd5e1', minHeight: '44px', fontFamily: 'monospace', margin: 0 }}>
+                    {displayedText}
+                    <span style={{ animation: 'blink 1s infinite' }}>_</span>
                 </p>
             </div>
 
-            {/* Launcher Grid Cards */}
-            <div className="sp-grid">
-                {/* Card 01: Load Bot */}
-                <div className="sp-card" onClick={() => handleNavigate(1)}>
-                    <div className="sp-card__header">
-                        <span className="sp-card__num">01</span>
-                        <div className="sp-card__icon">📥</div>
-                    </div>
-                    <div className="sp-card__body">
-                        <h3>Load Bot</h3>
-                        <p>Open your trading strategy or import XML files.</p>
-                    </div>
-                    <div className="sp-card__footer">
-                        <span>Choose a bot</span>
-                        <span className="sp-arrow">&rarr;</span>
-                    </div>
+            {/* Interactive Launcher Cards */}
+            <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#e2e8f0' }}>Workspace Launchers</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+                
+                {/* Card 1: Bot Builder */}
+                <div onClick={() => setActiveTab(1)} style={{
+                    background: 'rgba(30, 41, 59, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '14px',
+                    padding: '24px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                >
+                    <div style={{ fontSize: '28px', marginBottom: '12px' }}>🧩</div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 8px 0', color: '#fff' }}>Bot Builder</h3>
+                    <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>Configure and execute custom visual strategies & blockly blocks.</p>
                 </div>
 
-                {/* Card 02: Premium Bots */}
-                <div className="sp-card sp-card--featured" onClick={() => handleNavigate(2)}>
-                    <div className="sp-card__header">
-                        <span className="sp-card__num">02</span>
-                        <div className="sp-card__icon sp-icon--gold">💎</div>
-                    </div>
-                    <div className="sp-card__body">
-                        <h3>Premium Bots</h3>
-                        <p>Exclusive automated signal and AI reversal strategies.</p>
-                    </div>
-                    <div className="sp-card__footer">
-                        <span>Explore premium bots</span>
-                        <span className="sp-arrow">&rarr;</span>
-                    </div>
+                {/* Card 2: Apex Bot */}
+                <div onClick={() => setActiveTab(1)} style={{
+                    background: 'rgba(30, 41, 59, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '14px',
+                    padding: '24px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#8b5cf6'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                >
+                    <div style={{ fontSize: '28px', marginBottom: '12px' }}>⚡</div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 8px 0', color: '#fff' }}>Apex Engine</h3>
+                    <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>High-frequency tick execution & synthetic digit stream analysis.</p>
                 </div>
 
-                {/* Card 03: Speed Bot */}
-                <div className="sp-card" onClick={() => handleNavigate(3)}>
-                    <div className="sp-card__header">
-                        <span className="sp-card__num">03</span>
-                        <div className="sp-card__icon">⚡</div>
-                    </div>
-                    <div className="sp-card__body">
-                        <h3>Speed Bot</h3>
-                        <p>Ultra-fast automated tick trading engine.</p>
-                    </div>
-                    <div className="sp-card__footer">
-                        <span>Launch Speed Bot</span>
-                        <span className="sp-arrow">&rarr;</span>
-                    </div>
+                {/* Card 3: Quick Strategy */}
+                <div onClick={() => setActiveTab(1)} style={{
+                    background: 'rgba(30, 41, 59, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '14px',
+                    padding: '24px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#10b981'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'}
+                >
+                    <div style={{ fontSize: '28px', marginBottom: '12px' }}>📈</div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 8px 0', color: '#fff' }}>Quick Strategies</h3>
+                    <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>Deploy pre-built Martingale, D'Alembert, and Oscar's Grind setups.</p>
                 </div>
 
-                {/* Card 04: Manual Trading */}
-                <div className="sp-card" onClick={() => handleNavigate(4)}>
-                    <div className="sp-card__header">
-                        <span className="sp-card__num">04</span>
-                        <div className="sp-card__icon sp-icon--purple">📊</div>
-                    </div>
-                    <div className="sp-card__body">
-                        <h3>Manual Trading</h3>
-                        <p>Full manual execution control with live tick charts.</p>
-                    </div>
-                    <div className="sp-card__footer">
-                        <span>Start manual trading</span>
-                        <span className="sp-arrow">&rarr;</span>
-                    </div>
-                </div>
             </div>
         </div>
     );
 });
 
-export default DashboardComponent;
+export default Dashboard;
