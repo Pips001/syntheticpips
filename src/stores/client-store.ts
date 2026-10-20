@@ -64,12 +64,23 @@ export default class ClientStore {
         }
     };
 
+    // Listen to live balance updates pushed by Deriv WebSocket upon trade execution/settlement
+    onBalanceEvent = (response: { balance?: { balance: number; currency: string; loginid: string } }) => {
+        if (response?.balance) {
+            const { balance, loginid } = response.balance;
+            if (loginid === this.loginid && typeof balance === 'number') {
+                this.setBalance(balance.toString());
+            }
+        }
+    };
+
     constructor(root_store: RootStore) {
         this.root_store = root_store;
         // Subscribe to auth data changes
         this.authDataSubscription = authData$.subscribe(() => {});
 
         observer.register('api.authorize', this.onAuthorizeEvent);
+        observer.register('api.balance', this.onBalanceEvent);
 
         // Clean up any existing instance before registering new one to prevent memory leaks
         const existingId = globalObserver.getState('client.store.id');
@@ -111,6 +122,7 @@ export default class ClientStore {
 
             logout: action,
             onAuthorizeEvent: action,
+            onBalanceEvent: action,
             setAccountList: action,
 
             setAllAccountsBalance: action,
@@ -243,210 +255,4 @@ export default class ClientStore {
      */
 
     logout = async () => {
-        if (localStorage.getItem('active_loginid')) {
-            // Clear DerivAPI singleton instance and close WebSocket
-            const { clearDerivApiInstance } = await import('@/external/bot-skeleton/services/api/appId');
-            clearDerivApiInstance();
-
-            // Clear accounts cache from DerivWSAccountsService
-            const { DerivWSAccountsService } = await import('@/services/derivws-accounts.service');
-            DerivWSAccountsService.clearStoredAccounts();
-            DerivWSAccountsService.clearCache();
-
-            // Clear OAuth token via vendored deriv-core
-            const { clearAuthInfo } = await import('@/external/deriv-core');
-            clearAuthInfo();
-
-            // Reset all the states
-            this.account_list = [];
-            this.accounts = {};
-            this.is_logged_in = false;
-            this.loginid = '';
-            this.balance = '0';
-            this.currency = 'USD';
-            this.all_accounts_balance = null;
-
-            // Clear localStorage
-            localStorage.removeItem('active_loginid');
-            localStorage.removeItem('accountsList');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('clientAccounts');
-            localStorage.removeItem('account_type');
-
-            // Clear sessionStorage
-            sessionStorage.clear();
-
-            // Clear cookies
-            removeCookies('client_information');
-
-            // Reset observables
-            setIsAuthorized(false);
-            setAccountList([]);
-            setAuthData(null);
-
-            this.setIsLoggingOut(false);
-
-            // Disable livechat
-            window.LC_API?.close_chat?.();
-            window.LiveChatWidget?.call('hide');
-
-            // Shutdown and initialize intercom
-            if (window.Intercom) {
-                window.Intercom('shutdown');
-                window.DerivInterCom.initialize({
-                    hideLauncher: true,
-                    token: null,
-                });
-            }
-        }
-    };
-
-    /**
-     * Sets up visibility change listener to regenerate WebSocket when tab becomes visible
-     */
-    setupVisibilityListener() {
-        // Remove existing listener if any
-        this.removeVisibilityListener();
-
-        // Create handler function
-        this.tab_visibility_handler = async () => {
-            if (document.visibilityState === 'visible' && !this.is_regenerating) {
-                // Tab became visible - check if WebSocket needs regeneration
-                if (this.is_logged_in) {
-                    this.checkAndRegenerateWebSocket();
-                }
-            }
-        };
-
-        // Add listener
-        document.addEventListener('visibilitychange', this.tab_visibility_handler);
-    }
-
-    /**
-     * Set the current WebSocket login ID
-     * @param login_id The login ID used for the WebSocket connection
-     */
-    setWebSocketLoginId(login_id: string) {
-        this.ws_login_id = login_id;
-    }
-
-    /**
-     * Check if WebSocket needs to be regenerated based on login ID comparison
-     * @returns True if WebSocket needs regeneration, false otherwise
-     */
-    needsWebSocketRegeneration(): boolean {
-        const active_login_id = getAccountId();
-        return (
-            !this.is_regenerating &&
-            !!active_login_id &&
-            !!this.ws_login_id &&
-            active_login_id !== this.ws_login_id &&
-            !api_base.is_running
-        );
-    }
-
-    /**
-     * Check if WebSocket needs regeneration and regenerate if needed
-     */
-    checkAndRegenerateWebSocket() {
-        if (this.needsWebSocketRegeneration()) {
-            this.regenerateWebSocket();
-        }
-    }
-
-    /**
-     * Regenerate WebSocket connection with the new login ID
-     * This method clears all data and creates a new connection with the current active login ID
-     * Protected against race conditions with the is_regenerating flag
-     * Includes error handling to prevent users from being stuck in loading state
-     */
-    async regenerateWebSocket() {
-        if (this.is_regenerating) return;
-
-        this.is_regenerating = true;
-        this.setIsAccountRegenerating(true);
-
-        try {
-            const active_login_id = getAccountId();
-
-            if (active_login_id) {
-                // Clear DerivAPI singleton instance to force new connection
-                const { clearDerivApiInstance } = await import('@/external/bot-skeleton/services/api/appId');
-                clearDerivApiInstance();
-
-                // Clear accounts cache but keep stored accounts for reuse
-                const { DerivWSAccountsService } = await import('@/services/derivws-accounts.service');
-                DerivWSAccountsService.clearCache();
-
-                this.account_list = [];
-
-                this.accounts = {};
-                this.setIsLoggedIn(false);
-
-                this.balance = '0';
-                this.currency = 'USD';
-
-                this.all_accounts_balance = null;
-
-                localStorage.removeItem('accountsList');
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('clientAccounts');
-                localStorage.removeItem('account_type'); // Clear account type on logout
-                removeCookies('client_information');
-
-                setIsAuthorized(false);
-                setAccountList([]);
-                setAuthData(null);
-
-                this.setIsLoggingOut(false);
-
-                // disable livechat
-                window.LC_API?.close_chat?.();
-                window.LiveChatWidget?.call('hide');
-
-                // Force create a new connection with the current active login ID
-                // Wrap the potentially failing init call in a try-catch
-                try {
-                    await api_base.init(true); // ✅ Await the async call
-                } catch (initError) {
-                    ErrorLogger.error('ClientStore', 'WebSocket initialization failed', initError);
-                    this.setIsAccountRegenerating(false);
-                    throw initError; // Re-throw to be caught by outer catch if needed
-                }
-
-                // Update the tracked WebSocket login ID
-                this.setWebSocketLoginId(active_login_id);
-            }
-        } catch (error) {
-            ErrorLogger.error('ClientStore', 'WebSocket regeneration failed', error);
-            this.setIsAccountRegenerating(false);
-            // Consider showing user-facing error notification here
-            // or dispatching an event that UI components can listen to
-        } finally {
-            this.is_regenerating = false;
-        }
-    }
-
-    /**
-     * Removes the visibility change listener
-     */
-    removeVisibilityListener() {
-        if (this.tab_visibility_handler) {
-            document.removeEventListener('visibilitychange', this.tab_visibility_handler);
-            this.tab_visibility_handler = null;
-        }
-    }
-
-    destroy() {
-        this.authDataSubscription?.unsubscribe();
-        observer.unregister('api.authorize', this.onAuthorizeEvent);
-        this.removeVisibilityListener();
-
-        // Properly clean up the global observer reference
-        // Only clear if this instance is the one referenced by checking the instance ID
-        const storedId = globalObserver.getState('client.store.id');
-        if (storedId === this.instance_id) {
-            globalObserver.setState({ 'client.store': null, 'client.store.id': null });
-        }
-    }
-}
+        
