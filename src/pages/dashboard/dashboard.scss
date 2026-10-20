@@ -1,5 +1,164 @@
 @use 'components/shared/styles/mixins' as *;
 
+// --- SyntheticPips TraderScheme Custom Glassmorphic Styles ---
+.sp-dashboard-container {
+    padding: 24px 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: #f1f5f9;
+    width: 100%;
+}
+
+.sp-hero {
+    text-align: center;
+    margin-bottom: 32px;
+
+    .sp-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(15, 23, 42, 0.75);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        margin-bottom: 16px;
+
+        &__dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #38bdf8;
+            box-shadow: 0 0 8px #38bdf8;
+        }
+
+        &__text {
+            color: #38bdf8;
+            font-weight: 700;
+        }
+
+        &__divider {
+            color: #475569;
+        }
+
+        &__sub {
+            color: #94a3b8;
+        }
+    }
+
+    &__title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        min-height: 2.8rem;
+        background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+
+        .sp-cursor {
+            color: #38bdf8;
+            -webkit-text-fill-color: initial;
+            animation: blink 1s infinite;
+        }
+    }
+
+    &__subtitle {
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+}
+
+.sp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.sp-card {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.25s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: rgba(56, 189, 248, 0.4);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    &--featured {
+        border-color: rgba(234, 179, 8, 0.3);
+        background: radial-gradient(circle at top right, rgba(234, 179, 8, 0.08), rgba(15, 23, 42, 0.6));
+    }
+
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    &__num {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #64748b;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 4px 8px;
+        border-radius: 8px;
+    }
+
+    &__icon {
+        font-size: 1.4rem;
+    }
+
+    &__body {
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 6px;
+        }
+
+        p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+    }
+
+    &__footer {
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #38bdf8;
+
+        .sp-arrow {
+            transition: transform 0.2s ease;
+        }
+    }
+
+    &:hover &__footer .sp-arrow {
+        transform: translateX(4px);
+    }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+// --- Existing DBot Styles ---
 .bot-dashboard {
     --translate-panel-rtl: -367px;
     --translate-panel-ltr: 367px;
