@@ -1,16 +1,24 @@
-// Customizable header logo + app name for white-labeling. Renders on both desktop and
-// mobile (next to the hamburger). The logo/name resolution lives in LogoMark: partner
-// logo (public/logo.<ext>, written by the BFF at deploy time, or a live data URL pushed
-// from the App Builder via PREVIEW_BRANDING) → letter-badge fallback; app name from the
-// preview or the resolved deploy/build name.
-import { localize } from '@deriv-com/translations';
-import { LogoMark } from './LogoMark';
+import React from 'react';
+import { observer } from 'mobx-react-lite';
 import './app-logo.scss';
 
-export const AppLogo = () => {
+export const AppLogo = observer(() => {
     return (
-        <a href='/' className='app-header__logo' aria-label={localize('Home')}>
-            <LogoMark height={32} />
-        </a>
+        <div className="app-logo">
+            <a href="/" className="app-logo__link" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                <img 
+                    src="/1792477715797.jpg" 
+                    alt="SyntheticPips" 
+                    style={{ 
+                        height: '34px', 
+                        width: 'auto', 
+                        objectFit: 'contain',
+                        borderRadius: '6px'
+                    }} 
+                />
+            </a>
+        </div>
     );
-};
+});
+
+export default AppLogo;
